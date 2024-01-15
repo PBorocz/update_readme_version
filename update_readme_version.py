@@ -5,6 +5,8 @@ import tomllib
 from datetime import datetime
 from pathlib import Path
 
+from yachalk import chalk
+
 
 def get_args() -> [argparse.Namespace, list[str]]:
     """Parse -all- the command-line arguments provide, both known/expected and unknown/step associated."""
@@ -14,13 +16,6 @@ def get_args() -> [argparse.Namespace, list[str]]:
         "--version",
         help="Override and use this version instead of pyproject.toml.",
         default=None,
-    )
-
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="store_true",
-        default=False,
     )
 
     # Parse all the command-line args/parameters provided (both those above and unknown ones)
@@ -33,7 +28,7 @@ def validate(path_readme: Path = None) -> list[str]:
     # Check to see if optional argument exists if provided
     if path_readme:
         if not path_readme.exists():
-            fails.append(f"Sorry, path '[italic]{path_readme}[/]' could not be found.")
+            fails.append(f"Sorry, '{path_readme}' could not be found.")
             return fails
         return []
 
@@ -71,6 +66,7 @@ def run(args: argparse.Namespace, path_readme: Path, version: str | None = None)
     ** A.B.C - <older date>
     ...
     """
+    readme_suffix = path_readme.suffix.replace(".", "").casefold()
     readme_contents = path_readme.read_text()
 
     # Since we don't know what particular heading level "Unreleased" is, we need to scan through
@@ -82,27 +78,26 @@ def run(args: argparse.Namespace, path_readme: Path, version: str | None = None)
 
     # Confirm that we actually *found* the "Unreleased" header (irrespective of format):
     if not unreleased_header:
-        print(f"Sorry, couldn't find a header-line with 'Unreleased' in {path_readme}!")
+        print(chalk.red_bright(f"Sorry, couldn't find a header-line with 'Unreleased' in {path_readme}!"))
         return False            # Error condition..
 
     # If the current version already exists in the file, DO NOTHING!
     if f" {version}" in readme_contents:
-        if args.verbose:
-            print(f"Already had version {version} in README; Nothing done!")
+        print(chalk.green(f"Already had version {version} in README; Nothing done!"))
         return True             # NOT an error..
 
-    # We want to place the new version header at the same level as the current 'Unreleased',
-    # thus, we "build" the new release header line FROM the existing unreleased one, ensuring
+    # We want to place the new version header at the same level as the current 'Unreleased', so
+    # we "build" the new release header line FROM the existing unreleased one; thus ensuring
     # we'll match header levels!
     now_iso = datetime.now().strftime('%Y-%m-%d')
     new_release_header = unreleased_header.lower().replace("unreleased", f"{version} - {now_iso}")
 
     # Finally, we can replace the current unrelease_header line with the new contents..
-    readme_contents = readme_contents.replace(unreleased_header, unreleased_header + "\n\n" + new_release_header)
+    # (note that .org files don't usually have extra spaces between headings while markdown ones do)
+    new_line_s = "\n\n" if readme_suffix == "md" else "\n"
+    readme_contents = readme_contents.replace(unreleased_header, unreleased_header + new_line_s + new_release_header)
 
-    if args.verbose:
-        print(f"Running update on {path_readme.name} version to: '{new_release_header}'")
-
+    print(chalk.green(f"Running update on {path_readme.name} version to: '{new_release_header}'"))
     path_readme.write_text(readme_contents)
 
     return True  # Success
@@ -112,14 +107,14 @@ def _get_current_version() -> str | None:
     """."""
     fp_pyproject = Path("pyproject.toml")
     if not fp_pyproject.exists():
-        print("Sorry, if you don't pass an explicit version, pyproject.toml must exist in the current directory")
+        print(chalk.red_bright("Sorry, if you don't pass an explicit version, pyproject.toml must exist in the current directory"))
         return None
 
     raw_pyproject = tomllib.loads(Path("pyproject.toml").read_text())
     raw_version = raw_pyproject.get("tool", {}).get("poetry", {}).get("version", None)
     if not raw_version:
-        print("Sorry, your pyproject.toml file doesn't have a version, ",
-              "either set one of pass a version on the command-line.")
+        print(chalk.red_bright("Sorry, your pyproject.toml file doesn't have a version, ",
+              "either set one of pass a version on the command-line."))
         return None
 
     return raw_version
@@ -135,7 +130,7 @@ def main():
         # If we're given a README file, validate it...
         if fails := validate(Path(s_readme)):
             for msg in fails:
-                print(msg)
+                print(chalk.red_bright(msg))
             sys.exit(1)
 
     # Get the new release "tag" to use..

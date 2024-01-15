@@ -6,8 +6,9 @@ authors = ["Peter Borocz <680893+PBorocz@users.noreply.github.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
-
+python = ">=3.11,<3.13"
+pyinstaller = "^6.3.0"
+yachalk = "^0.1.5"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.4"
@@ -15,3 +16,16 @@ pytest = "^7.4.4"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+# ##############################################################################
+# PoeThePoet
+# ##############################################################################
+[tool.poe]
+verbosity = 2
+
+[tool.poe.tasks]
+build = ["_clean", "_build"]
+install = "cp -R dist/update_readme_version/* /Users/peter/.local/bin/"
+
+_build = "pyinstaller update_readme_version.py"
+_clean	= "rm -rf dist build"

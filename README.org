@@ -1,0 +1,8 @@
+* Release Management
+** GTD
+*** TODO Would be nice to be able to "find" pyproject.toml in any directory "above" cwd.
+** ChangeLog
+*** Unreleased
+*** 0.1.0 - 2024-01-14
+- asdf asd fasdf
+- asdf asdf asdf asdf

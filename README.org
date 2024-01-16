@@ -1,8 +1,49 @@
+* General
+** Definition
+This is a small tool to be used to "roll" forward a ChangeLog kept in either README.md or README.org, i.e.:
+
+#+BEGIN_SRC text
+  # ...
+  * Release History
+  ** Unreleased
+     - changed this
+     - changed that
+  ** M.m.p <older date>
+  # ...
+#+END_SRC
+
+To this (for a patch release):
+
+#+BEGIN_SRC text
+  # ...
+  * Release History
+  ** Unreleased
+  ** M.m.q - <today>    <-- Adding this line based on pyproject.version_ and today
+     - changed this
+     - changed that
+  ** M.m.p - <older date>
+  # ...
+#+END_SRC
+** Installation
+Meant to be run directly from your path by copying ./dist/update_readme_version/* to anywhere on your path (e.g. ~/.local/bin).
+
+See pyproject.toml[tool.poe.tasks]install for an example.
+** Usage
+Run from your project "root" folder, i.e. where `pyproject.toml` and `README.*` exist.
+
+- Tool will read current version from `pyproject.toml` and update the respective README file.
+
+- Tool can be safely run multiple times; if the respective version already exists in the README file, no actions are taken.
+
+*** Arguments
+**** --version <foo>: Override use of `pyproject.toml` and set version to `foo`.
+
 * Release Management
 ** GTD
-*** TODO Would be nice to be able to "find" pyproject.toml in any directory "above" cwd.
+*** TODO Allow for an explicit path to find both README and pyproject.toml. e.g.:
+$ update_readme_version --path ~/dev/anotherProject
+*** TODO Make colors more specific within a message string?
 ** ChangeLog
 *** Unreleased
 *** 0.1.0 - 2024-01-14
-- asdf asd fasdf
-- asdf asdf asdf asdf
+- First release

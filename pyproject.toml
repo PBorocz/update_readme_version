@@ -27,5 +27,5 @@ verbosity = 2
 build = ["_clean", "_build"]
 install = "cp -R dist/update_readme_version/* /Users/peter/.local/bin/"
 
-_build = "pyinstaller update_readme_version.py"
+_build = "pyinstaller --onedir update_readme_version.py"
 _clean	= "rm -rf dist build"

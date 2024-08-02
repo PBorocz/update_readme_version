@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from update_readme_version import _get_current_version, run, validate
+from update_readme_version import _get_current_version, _find_readme, run
 
 
 class Args():
@@ -61,18 +61,8 @@ def path_readme():
 ################################################################################
 def test_validate_error_invalid_file():
     """Non-existent file if provided."""
-    fails = validate(Path("asdf/ewrasdfaer"))
-    assert fails
-    assert len(fails) == 1
-    assert "could not be found." in fails[0]
-
-# def test_validate_error_missing_file():
-#     """Mising file."""
-#     fails = validate()
-#     assert fails
-#     assert len(fails) == 1
-#     assert "couldn't find either" in fails[0]
-
+    path_readme = _find_readme(override_format=("unknown"))
+    assert path_readme is None
 
 def test_readme_no_unreleased(capsys, path_readme_no_unreleased):
     """Test case where we have a README that has no Unreleased section."""

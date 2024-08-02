@@ -24,7 +24,6 @@ build-backend = "poetry.core.masonry.api"
 verbosity = 2
 
 [tool.poe.tasks]
-test = ["pytest -v"]
 BUILD = ["_clean", "_build"]
 INSTALL = "cp -R dist/update_readme_version/* /Users/peter/.local/bin/"
 

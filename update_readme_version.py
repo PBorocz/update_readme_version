@@ -22,27 +22,18 @@ def get_args() -> [argparse.Namespace, list[str]]:
     return parser.parse_known_args()
 
 
-def validate(path_readme: Path = None) -> list[str]:
-    """Perform any pre-method validation."""
-    fails = []
-    # Check to see if optional argument exists if provided
-    if path_readme:
-        if not path_readme.exists():
-            fails.append(f"Sorry, '{path_readme}' could not be found.")
-            return fails
-        return []
-
-    # Check to see if we have one in the current directory
+def _find_readme(override_format: tuple[str] | None = None) -> Path | None:
+    """Find a local README path, or None."""
     cwd = Path.cwd()
-    for format_ in ("org", "md"):
+    formats = override_format if override_format else ("org", "md")
+    for format_ in formats:
         readme_name = f"README.{format_}"
         path_readme = cwd / readme_name
         if path_readme.exists():
-            break
-    else:
-        fails.append("Sorry, couldn't find either a README.org or " "README.md in the top-level directory!")
+            return path_readme
+    print("Sorry, couldn't find either a README.org or README.md in the current directory.")
+    return None
 
-    return fails
 
 def run(args: argparse.Namespace, path_readme: Path, version: str | None = None) -> bool:
     """Search for 'Unreleased...' header in Changelog portion of README, update *current* pyproject.toml.
@@ -107,14 +98,15 @@ def _get_current_version() -> str | None:
     """."""
     fp_pyproject = Path("pyproject.toml")
     if not fp_pyproject.exists():
-        print(chalk.red_bright("Sorry, if you don't pass an explicit version, pyproject.toml must exist in the current directory"))
+        print(chalk.red_bright("Sorry, if you don't pass an explicit version, ",
+                               "pyproject.toml must exist in the current directory"))
         return None
 
     raw_pyproject = tomllib.loads(Path("pyproject.toml").read_text())
     raw_version = raw_pyproject.get("tool", {}).get("poetry", {}).get("version", None)
     if not raw_version:
         print(chalk.red_bright("Sorry, your pyproject.toml file doesn't have a version, ",
-              "either set one of pass a version on the command-line."))
+                               "either set one of pass a version on the command-line."))
         return None
 
     return raw_version
@@ -125,13 +117,12 @@ def main():
     args_static, dynamic = get_args()
 
     # Get path to valid README file.
-    s_readme: str | None = dynamic[0]
-    if s_readme:
-        # If we're given a README file, validate it...
-        if fails := validate(Path(s_readme)):
-            for msg in fails:
-                print(chalk.red_bright(msg))
-            sys.exit(1)
+    path_readme = Path(dynamic[0]) if dynamic else _find_readme()
+
+    # Make sure it exists
+    if not path_readme.exists():
+        print(chalk.red_bright(f"Sorry, '{path_readme}' could not be found."))
+        sys.exit(1)
 
     # Get the new release "tag" to use..
     if not (version := args_static.version):
@@ -140,9 +131,8 @@ def main():
         return False
 
     # Run!
-    if not run(args_static, Path(s_readme), version):
+    if not run(args_static, path_readme, version):
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()
